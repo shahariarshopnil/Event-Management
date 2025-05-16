@@ -8,9 +8,7 @@ import { getEventDetails } from '../redux/slices/eventSlice';
 import { getEventPackages } from '../redux/slices/packageSlice';
 import { createBooking } from '../redux/slices/bookingSlice';
 import { initiatePayment, resetPaymentState } from '../redux/slices/paymentSlice';
-import DirectPaymentForm from '../components/payment/DirectPaymentForm';
-import PaymentMethodSelector from '../components/payment/PaymentMethodSelector';
-import MobileBankingForm from '../components/payment/MobileBankingForm';
+import SSLCommerzGateway from '../components/payment/SSLCommerzGateway';
 import BookingButton from '../components/buttons/BookingButton';
 import Loader from '../components/shared/Loader';
 import Message from '../components/shared/Message';
@@ -37,11 +35,10 @@ const SimpleTicketBookingPage = () => {
   const [numberOfTickets, setNumberOfTickets] = useState(1);
   const [specialRequirements, setSpecialRequirements] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-  const [showMobileNumberForm, setShowMobileNumberForm] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+  const [showPaymentGateway, setShowPaymentGateway] = useState(false);
   const [paymentFormData, setPaymentFormData] = useState(null);
+  const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const [pendingTransactionId, setPendingTransactionId] = useState(null);
 
   // Fetch event and packages
   useEffect(() => {
@@ -69,21 +66,18 @@ const SimpleTicketBookingPage = () => {
     }
   }, [bookingSuccess, navigate]);
   
-  // Handle payment redirection
+  // Handle payment status changes
   useEffect(() => {
-    if (paymentSuccess && redirectUrl) {
-      console.log('Redirecting to payment gateway:', redirectUrl);
-      // Add a small delay to allow the toast to show before redirect
-      const redirectTimer = setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 1000);
-      return () => clearTimeout(redirectTimer);
+    if (paymentSuccess) {
+      console.log('Payment successfully initiated');
+      setPaymentInitiated(true);
     }
     
     if (paymentError) {
       toast.error(paymentError || 'Payment initiation failed');
+      setPaymentInitiated(false);
     }
-  }, [paymentSuccess, redirectUrl, paymentError]);
+  }, [paymentSuccess, paymentError]);
   
   // Clean up on component unmount
   useEffect(() => {
@@ -131,45 +125,11 @@ const SimpleTicketBookingPage = () => {
       product_category: 'Event Ticket'
     };
     
-    // Set the payment form data and show payment method selection
+    // Set the payment form data and show payment gateway
     setPaymentFormData(paymentData);
-    setShowPaymentMethods(true);
+    setShowPaymentGateway(true);
     
-    console.log('Preparing payment selection with data:', paymentData);
-  };
-  
-  // Handle payment method selection and proceed to mobile number input
-  const handlePaymentMethodSelected = (updatedPaymentData) => {
-    console.log('Selected payment method:', updatedPaymentData.preferred_method);
-    setPaymentFormData(updatedPaymentData);
-    
-    // Find the selected method object
-    const methodName = updatedPaymentData.preferred_method;
-    const methodObject = {
-      name: methodName === 'bkash' ? 'bKash' : 
-            methodName === 'nagad' ? 'Nagad' : 'DBBL Mobile Banking',
-      type: 'mobilebanking',
-      logo: `https://sandbox.sslcommerz.com/gwprocess/v4/image/gw/${methodName}.png`,
-      gw: methodName
-    };
-    
-    setSelectedPaymentMethod(methodObject);
-    setShowPaymentMethods(false);
-    setShowMobileNumberForm(true);
-  };
-  
-  // Handle mobile number submission and proceed to payment
-  const handleMobileNumberSubmitted = (updatedPaymentData) => {
-    console.log('Mobile number provided:', updatedPaymentData.cus_phone);
-    setPaymentFormData(updatedPaymentData);
-    setShowMobileNumberForm(false);
-    setShowPaymentForm(true);
-  };
-  
-  // Handle back button from mobile number form
-  const handleBackToPaymentMethods = () => {
-    setShowMobileNumberForm(false);
-    setShowPaymentMethods(true);
+    console.log('Preparing payment with data:', paymentData);
   };
 
   // Loading state
@@ -302,24 +262,18 @@ const SimpleTicketBookingPage = () => {
               />
             </Form.Group>
 
-            {showPaymentMethods && paymentFormData ? (
-              <PaymentMethodSelector 
+            {showPaymentGateway && paymentFormData ? (
+              <SSLCommerzGateway 
                 paymentData={paymentFormData}
-                onSubmit={handlePaymentMethodSelected}
-                loading={bookingLoading || paymentLoading} 
-              />
-            ) : showMobileNumberForm && paymentFormData && selectedPaymentMethod ? (
-              <MobileBankingForm
-                paymentMethod={selectedPaymentMethod}
-                paymentData={paymentFormData}
-                onSubmit={handleMobileNumberSubmitted}
-                onBack={handleBackToPaymentMethods}
-                loading={bookingLoading || paymentLoading}
-              />
-            ) : showPaymentForm && paymentFormData ? (
-              <DirectPaymentForm 
-                paymentData={paymentFormData} 
-                loading={bookingLoading || paymentLoading} 
+                onPaymentInitiated={(data) => {
+                  setPendingTransactionId(data.transactionId);
+                  setPaymentInitiated(true);
+                  toast.info('Your payment is being processed');
+                }}
+                onPaymentCancelled={() => {
+                  setShowPaymentGateway(false);
+                  toast.info('Payment cancelled');
+                }}
               />
             ) : (
               <Button 

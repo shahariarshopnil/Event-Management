@@ -9,36 +9,51 @@ const PaymentMethodSelector = ({ paymentData, onSubmit, loading }) => {
   const [loadingMethods, setLoadingMethods] = useState(true);
   const [error, setError] = useState(null);
 
-  // Mobile banking methods based on SSLCommerz options
-  const mobilePaymentOptions = [
+  // Payment methods available through SSLCommerz
+  const allPaymentOptions = [
+    // Mobile banking methods
     {
       name: "bKash",
       type: "mobilebanking",
       logo: "https://sandbox.sslcommerz.com/gwprocess/v4/image/gw/bkash.png",
-      gw: "bkash"
+      gw: "bkash",
+      category: "mobile"
     },
     {
       name: "Nagad",
       type: "mobilebanking",
       logo: "https://sandbox.sslcommerz.com/gwprocess/v4/image/gw/nagad.png",
-      gw: "nagad"
+      gw: "nagad",
+      category: "mobile"
     },
     {
       name: "DBBL Mobile Banking",
       type: "mobilebanking",
       logo: "https://sandbox.sslcommerz.com/gwprocess/v4/image/gw/dbblmobilebank.png",
-      gw: "dbblmobilebanking"
+      gw: "dbblmobilebanking",
+      category: "mobile"
+    },
+    // SSLCommerz direct payment options
+    {
+      name: "Cards & Other Methods",
+      type: "cards",
+      logo: "https://sandbox.sslcommerz.com/gwprocess/v4/image/gw/sslcommerz.png",
+      gw: "sslcommerz",
+      category: "card"
     }
   ];
+  
+  // Mobile banking methods only - used for categorization
+  const mobilePaymentOptions = allPaymentOptions.filter(method => method.category === 'mobile');
 
   // Set payment methods
   useEffect(() => {
-    setPaymentMethods(mobilePaymentOptions);
+    setPaymentMethods(allPaymentOptions);
     setLoadingMethods(false);
     
     // Auto-select the first payment method if none is selected
-    if (mobilePaymentOptions.length > 0) {
-      setSelectedMethod(mobilePaymentOptions[0]);
+    if (allPaymentOptions.length > 0) {
+      setSelectedMethod(allPaymentOptions[0]);
     }
   }, []);
 
@@ -87,42 +102,89 @@ const PaymentMethodSelector = ({ paymentData, onSubmit, loading }) => {
       <h5 className="mb-3">Select Payment Method</h5>
       
       <Form onSubmit={handleSubmit}>
+        {/* Mobile Banking Methods Section */}
         <div className="mb-4">
           <h6 className="mb-3">Mobile Banking Options</h6>
           <Row xs={1} md={3} className="g-3">
-            {paymentMethods.map((method) => (
-              <Col key={method.gw}>
-                <Card 
-                  className={`payment-method-card ${selectedMethod?.gw === method.gw ? 'border-primary' : ''}`}
-                  onClick={() => handlePaymentMethodSelect(method)}
-                  style={{ cursor: 'pointer', height: '100%' }}
-                >
-                  <Card.Body className="text-center p-3">
-                    <div className="d-flex justify-content-between align-items-start mb-3">
-                      <img 
-                        src={method.logo} 
-                        alt={method.name} 
-                        style={{ height: '35px', objectFit: 'contain' }} 
-                      />
-                      {selectedMethod?.gw === method.gw && (
-                        <FaCheckCircle className="text-primary" />
-                      )}
-                    </div>
-                    <div>
-                      <Form.Check
-                        type="radio"
-                        id={`payment-${method.gw}`}
-                        name="paymentMethod"
-                        label={method.name}
-                        checked={selectedMethod?.gw === method.gw}
-                        onChange={() => handlePaymentMethodSelect(method)}
-                        className="d-flex align-items-center justify-content-center"
-                      />
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+            {paymentMethods
+              .filter(method => method.category === 'mobile')
+              .map((method) => (
+                <Col key={method.gw}>
+                  <Card 
+                    className={`payment-method-card ${selectedMethod?.gw === method.gw ? 'border-primary' : ''}`}
+                    onClick={() => handlePaymentMethodSelect(method)}
+                    style={{ cursor: 'pointer', height: '100%' }}
+                  >
+                    <Card.Body className="text-center p-3">
+                      <div className="d-flex justify-content-between align-items-start mb-3">
+                        <img 
+                          src={method.logo} 
+                          alt={method.name} 
+                          style={{ height: '35px', objectFit: 'contain' }} 
+                        />
+                        {selectedMethod?.gw === method.gw && (
+                          <FaCheckCircle className="text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <Form.Check
+                          type="radio"
+                          id={`payment-${method.gw}`}
+                          name="paymentMethod"
+                          label={method.name}
+                          checked={selectedMethod?.gw === method.gw}
+                          onChange={() => handlePaymentMethodSelect(method)}
+                          className="d-flex align-items-center justify-content-center"
+                        />
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+          </Row>
+        </div>
+        
+        {/* Cards & Other Payment Methods Section */}
+        <div className="mb-4">
+          <h6 className="mb-3">Cards & Other Payment Methods</h6>
+          <Row xs={1} className="g-3">
+            {paymentMethods
+              .filter(method => method.category === 'card')
+              .map((method) => (
+                <Col key={method.gw}>
+                  <Card 
+                    className={`payment-method-card ${selectedMethod?.gw === method.gw ? 'border-primary' : ''}`}
+                    onClick={() => handlePaymentMethodSelect(method)}
+                    style={{ cursor: 'pointer', height: '100%' }}
+                  >
+                    <Card.Body className="p-3">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                          <img 
+                            src={method.logo} 
+                            alt={method.name} 
+                            style={{ height: '35px', objectFit: 'contain', marginRight: '15px' }} 
+                          />
+                          <div>
+                            <Form.Check
+                              type="radio"
+                              id={`payment-${method.gw}`}
+                              name="paymentMethod"
+                              label={method.name}
+                              checked={selectedMethod?.gw === method.gw}
+                              onChange={() => handlePaymentMethodSelect(method)}
+                            />
+                            <small className="text-muted d-block">Visa, Mastercard, American Express & more</small>
+                          </div>
+                        </div>
+                        {selectedMethod?.gw === method.gw && (
+                          <FaCheckCircle className="text-primary" />
+                        )}
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
           </Row>
         </div>
 

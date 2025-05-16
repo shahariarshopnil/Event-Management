@@ -106,110 +106,32 @@ const PaymentSuccessPage = () => {
   }
 
   return (
-    <Container className="py-5">
+    <Container>
       <Row className="justify-content-center">
-        <Col md={10} lg={8}>
-          <Card className="border-0 shadow">
-            <Card.Header className="bg-success text-white p-4">
-              <div className="d-flex align-items-center">
-                <div className="me-3">
-                  <FaCheckCircle style={{ fontSize: '3rem' }} />
+        <Col md={8}>
+          <Card className="shadow-sm">
+            <Card.Body className="text-center p-5">
+              <FaCheckCircle className="text-success mb-4" size={60} />
+              <h2 className="mb-4">Payment Successful!</h2>
+              <p className="lead mb-4">
+                Your payment of {currency} {amount} has been processed successfully.
+              </p>
+              {event && (
+                <div className="mb-4">
+                  <h4>{event.name}</h4>
+                  {selectedPackage && (
+                    <p className="text-muted">
+                      Package: {selectedPackage.name} x {quantity}
+                    </p>
+                  )}
                 </div>
-                <div>
-                  <h2 className="mb-0">Payment Successful!</h2>
-                  <p className="mb-0 mt-1">Your booking has been confirmed</p>
-                </div>
-              </div>
-            </Card.Header>
-            <Card.Body className="p-4">
-              <div className="payment-confirmation mb-4 p-3 bg-light rounded">
-                <div className="d-flex align-items-center mb-3">
-                  <FaTicketAlt className="text-success me-2" size={24} />
-                  <h4 className="mb-0">Booking Confirmation</h4>
-                </div>
-                <p>Your payment has been processed successfully and your booking is now confirmed.</p>
-                <p className="mb-0">A confirmation email has been sent to your registered email address.</p>
-              </div>
-              
-              <Row className="mb-4">
-                <Col md={6}>
-                  <div className="border rounded p-3 h-100">
-                    <h5 className="border-bottom pb-2">Payment Details</h5>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Transaction ID:</strong>
-                      <span className="text-monospace">{transactionId}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Amount Paid:</strong>
-                      <span className="fw-bold">{currency} {amount}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Payment Status:</strong>
-                      <span className="badge bg-success">Confirmed</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Payment Method:</strong>
-                      <span>Mobile Banking</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Payment Date:</strong>
-                      <span>{new Date().toLocaleString()}</span>
-                    </div>
-                  </div>
-                </Col>
-                
-                <Col md={6}>
-                  <div className="border rounded p-3 h-100">
-                    <h5 className="border-bottom pb-2">Booking Details</h5>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Event:</strong>
-                      <span>{event?.title || paymentDetails?.event?.title || "Your Event"}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Package:</strong>
-                      <span>{selectedPackage?.name || paymentDetails?.package?.name || "Standard Ticket"}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Quantity:</strong>
-                      <span>{quantity || 1}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Booking ID:</strong>
-                      <span className="text-monospace">{paymentDetails?.bookingId || `BK-${transactionId?.substring(6, 12)}`}</span>
-                    </div>
-                    <div className="d-flex justify-content-between py-2">
-                      <strong>Status:</strong>
-                      <span className="badge bg-success">Confirmed</span>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-              
-              <div className="p-3 border rounded mb-4 bg-light">
-                <h5>What's Next?</h5>
-                <ul className="mb-0">
-                  <li>You will receive an email with your e-tickets shortly</li>
-                  <li>You can view your bookings in your account dashboard</li>
-                  <li>For any questions, please contact our support team</li>
-                </ul>
-              </div>
-              
-              <div className="d-flex justify-content-between">
-                <Button 
-                  variant="primary" 
-                  onClick={goToBookings}
-                  className="px-4"
-                >
-                  <FaTicketAlt className="me-2" />
-                  View My Bookings
+              )}
+              <div className="d-grid gap-3 d-md-flex justify-content-md-center">
+                <Button variant="primary" onClick={goToBookings}>
+                  <FaTicketAlt className="me-2" /> View My Bookings
                 </Button>
-                
-                <Button 
-                  variant="outline-primary" 
-                  onClick={goToEvents}
-                >
-                  <FaArrowRight className="me-2" />
-                  Browse More Events
+                <Button variant="outline-primary" onClick={goToEvents}>
+                  <FaArrowRight className="me-2" /> Browse More Events
                 </Button>
               </div>
             </Card.Body>

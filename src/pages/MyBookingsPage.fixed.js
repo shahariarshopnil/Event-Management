@@ -48,10 +48,10 @@ const MyBookingsPage = () => {
     // Fetch bookings when component mounts or when returning from payment/booking process
     dispatch(getUserBookings());
     
-    // Set up auto-refresh for bookings data - more frequent refresh for new payments
+    // Set up auto-refresh for bookings data
     const refreshInterval = setInterval(() => {
       dispatch(getUserBookings());
-    }, paymentSuccess === 'true' ? 3000 : 10000); // More frequent refresh for new payments
+    }, 10000); // Refresh every 10 seconds to catch new bookings
     
     // Show success toast if redirected from payment success
     if (paymentSuccess === 'true') {
@@ -64,21 +64,11 @@ const MyBookingsPage = () => {
         draggable: true,
         icon: <FaCheckCircle />
       });
-      
-      // Force immediate fetch for new booking data after payment
-      const immediateRefresh = setTimeout(() => {
-        dispatch(getUserBookings());
-      }, 1000);
-      
-      return () => {
-        clearTimeout(immediateRefresh);
-        clearInterval(refreshInterval);
-      };
     }
     
     // Clean up interval on component unmount
     return () => clearInterval(refreshInterval);
-  }, [dispatch, paymentSuccess, bookingId]);
+  }, [dispatch, paymentSuccess]);
   
   // Find booking from highlight parameters and show details
   useEffect(() => {
@@ -88,19 +78,6 @@ const MyBookingsPage = () => {
       // First check for booking ID from payment success redirect
       if (bookingId) {
         recentBooking = bookings.find(booking => booking._id === bookingId);
-        
-        // If coming from payment process, make this more visible
-        if (recentBooking && paymentSuccess === 'true') {
-          console.log('New booking found after payment:', recentBooking);
-          
-          // Scroll to ensure the new booking is visible
-          setTimeout(() => {
-            const bookingElement = document.getElementById(`booking-${recentBooking._id}`);
-            if (bookingElement) {
-              bookingElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }, 500);
-        }
       }
       
       // Then try to find by other highlight parameters if not found
@@ -124,17 +101,8 @@ const MyBookingsPage = () => {
         // Automatically set the filter to show confirmed bookings
         setFilter('confirmed');
       }
-    } else if (paymentSuccess === 'true' && bookingId) {
-      // If bookings haven't loaded yet but we're coming from payment, show loading indicator
-      toast.info('Loading your booking details...', {
-        position: 'top-right',
-        autoClose: 2000
-      });
-      
-      // Force another fetch to ensure we get the latest booking data
-      dispatch(getUserBookings());
     }
-  }, [bookings, highlightTransactionId, highlightBookingId, bookingId, transactionId, paymentSuccess, dispatch]);
+  }, [bookings, highlightTransactionId, highlightBookingId, bookingId, transactionId]);
 
   // Filter bookings based on status and search term
   const filteredBookings = bookings.filter((booking) => {
@@ -284,13 +252,9 @@ const MyBookingsPage = () => {
                   <tbody>
                     {filteredBookings.map((booking) => (
                       <tr 
-                        key={booking._id}
-                        id={`booking-${booking._id}`}
+                        key={booking._id} 
                         className={isRecentlyPaid(booking) ? 'highlight-row' : ''}
-                        style={isRecentlyPaid(booking) ? { 
-                          borderLeft: '4px solid #198754',
-                          backgroundColor: paymentSuccess === 'true' && booking._id === bookingId ? 'rgba(25, 135, 84, 0.1)' : ''
-                        } : {}}
+                        style={isRecentlyPaid(booking) ? { borderLeft: '4px solid #198754' } : {}}
                       >
                         <td>
                           <span className="fw-bold">#{booking._id.substring(0, 8)}</span>
@@ -344,22 +308,12 @@ const MyBookingsPage = () => {
           size="lg"
           centered
         >
-          <Modal.Header closeButton className="bg-light">
-            <div className="d-flex align-items-center w-100 justify-content-between">
-              <div className="d-flex align-items-center">
-                <h3 className="text-success mb-0">Event Details</h3>
-                {paymentSuccess === 'true' && bookingId === selectedBooking?._id && (
-                  <Badge bg="success" className="ms-3 py-2 px-3">
-                    <FaCheckCircle className="me-1" /> Just Confirmed
-                  </Badge>
-                )}
-              </div>
-              {selectedBooking && (
-                <Badge 
-                  bg={getStatusBadgeColor(selectedBooking.bookingStatus)} 
-                  className="px-3 py-2"
-                >
-                  {selectedBooking.bookingStatus.charAt(0).toUpperCase() + selectedBooking.bookingStatus.slice(1)}
+          <Modal.Header closeButton>
+            <div className="d-flex align-items-center">
+              <h3 className="text-success">Event Details</h3>
+              {paymentSuccess === 'true' && bookingId === selectedBooking?._id && (
+                <Badge bg="success" className="ms-3 py-2 px-3">
+                  <FaCheckCircle className="me-1" /> Just Confirmed
                 </Badge>
               )}
             </div>
@@ -383,47 +337,21 @@ const MyBookingsPage = () => {
                       </Card.Body>
                     </Card>
                     
-                    <ListGroup className="mb-3 booking-details-list">
-                      <ListGroup.Item className="d-flex justify-content-between bg-light">
-                        <strong>Booking Information</strong>
-                        <FaTicketAlt className="text-primary" />
+                    <ListGroup className="mb-3">
+                      <ListGroup.Item className="d-flex justify-content-between">
+                        <span>Booking Status:</span>
+                        <Badge bg={getStatusBadgeColor(selectedBooking.bookingStatus)} className="px-3 py-2">
+                          {selectedBooking.bookingStatus.charAt(0).toUpperCase() + selectedBooking.bookingStatus.slice(1)}
+                        </Badge>
                       </ListGroup.Item>
                       <ListGroup.Item className="d-flex justify-content-between">
                         <span>Booking ID:</span>
                         <span className="fw-bold">{selectedBooking._id}</span>
                       </ListGroup.Item>
-                      <ListGroup.Item className="d-flex justify-content-between">
-                        <span>Booking Date:</span>
-                        <span>{new Date(selectedBooking.createdAt).toLocaleString()}</span>
-                      </ListGroup.Item>
-                      <ListGroup.Item className="d-flex justify-content-between bg-light">
-                        <strong>Payment Information</strong>
-                        <FaCheckCircle className="text-success" />
-                      </ListGroup.Item>
-                      <ListGroup.Item className="d-flex justify-content-between">
-                        <span>Payment Status:</span>
-                        <Badge bg={getStatusBadgeColor(selectedBooking.bookingStatus)} className="px-3 py-2">
-                          {selectedBooking.bookingStatus.charAt(0).toUpperCase() + selectedBooking.bookingStatus.slice(1)}
-                        </Badge>
-                      </ListGroup.Item>
-                      {selectedBooking.transactionId && (
-                        <ListGroup.Item className="d-flex justify-content-between">
-                          <span>Transaction ID:</span>
-                          <span className="fw-bold">{selectedBooking.transactionId}</span>
-                        </ListGroup.Item>
-                      )}
                       {selectedBooking.paymentReference && (
                         <ListGroup.Item className="d-flex justify-content-between">
                           <span>Payment Reference:</span>
                           <span className="fw-bold">{selectedBooking.paymentReference}</span>
-                        </ListGroup.Item>
-                      )}
-                      {paymentSuccess === 'true' && bookingId === selectedBooking._id && (
-                        <ListGroup.Item className="bg-success text-white">
-                          <div className="d-flex align-items-center justify-content-center">
-                            <FaCheckCircle className="me-2" />
-                            <span className="fw-bold">Payment Confirmed</span>
-                          </div>
                         </ListGroup.Item>
                       )}
                     </ListGroup>
@@ -451,16 +379,9 @@ const MyBookingsPage = () => {
                     </div>
                     
                     <h5 className="mt-4 mb-3">Booking Details</h5>
-                    <Card className="border-0 shadow-sm">
-                      <Card.Header className="bg-light">
-                        <h5 className="mb-0">Ticket Details</h5>
-                      </Card.Header>
+                    <Card>
                       <Table responsive borderless className="mb-0">
                         <tbody>
-                          <tr>
-                            <td><strong>Ticket Type:</strong></td>
-                            <td>{selectedBooking.ticketType || 'Standard'}</td>
-                          </tr>
                           <tr>
                             <td><strong>Quantity:</strong></td>
                             <td>{selectedBooking.quantity || 1}</td>
@@ -470,15 +391,9 @@ const MyBookingsPage = () => {
                             <td>৳{(selectedBooking.totalAmount / (selectedBooking.quantity || 1)).toFixed(2)}</td>
                           </tr>
                           <tr className="table-light">
-                            <td><strong>Total Amount:</strong></td>
-                            <td className="fw-bold text-success">৳{selectedBooking.totalAmount.toFixed(2)}</td>
+                            <td><strong>Total:</strong></td>
+                            <td className="fw-bold">৳{selectedBooking.totalAmount.toFixed(2)}</td>
                           </tr>
-                          {selectedBooking.paymentMethod && (
-                            <tr>
-                              <td><strong>Payment Method:</strong></td>
-                              <td>{selectedBooking.paymentMethod === 'sslcommerz' ? 'SSLCommerz' : selectedBooking.paymentMethod}</td>
-                            </tr>
-                          )}
                         </tbody>
                       </Table>
                     </Card>
