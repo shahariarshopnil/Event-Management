@@ -1,0 +1,99 @@
+/* General App Styles */
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add padding to main content to prevent it from being hidden behind the fixed header */
+main {
+  flex-grow: 1;
+  padding-top: 76px; /* Adjust this value based on your header height */
+}
+
+/* Ensure smooth transitions when header changes */
+.transition-all {
+  transition: all 0.3s ease;
+}
+
+/* Organizer-specific UI elements */
+.highlight-nav-item {
+  background-color: rgba(13, 110, 253, 0.1);
+  border-radius: 5px;
+  margin-left: 10px;
+  font-weight: 500;
+  color: #0d6efd !important;
+}
+
+.highlight-nav-item:hover {
+  background-color: rgba(13, 110, 253, 0.2);
+  transform: translateY(-2px);
+}
+
+/* User role styles */
+.attendee-view .organizer-only {
+  display: none !important;
+}
+
+.organizer-view .attendee-only {
+  display: none !important;
+}
+
+/* Event List View Styles */
+.list-event-image {
+  width: 230px;
+  min-height: 180px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.price-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Filter Styles */
+.input-group .form-control:focus,
+.input-group .btn:focus {
+  z-index: 1;
+}
+
+/* Event Card Styles */
+.event-card {
+  height: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.event-card .card-img-top {
+  height: 180px;
+  object-fit: cover;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .list-event-image {
+    width: 100%;
+    height: 200px;
+  }
+  
+  .event-filter-button {
+    margin-top: 10px;
+    width: 100%;
+  }
+}
